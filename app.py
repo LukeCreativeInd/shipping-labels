@@ -16,7 +16,11 @@ if uploaded_file:
     if file_type == "csv":
         df = pd.read_csv(uploaded_file)
     elif file_type == "xlsx":
-        df = pd.read_excel(uploaded_file)
+        try:
+            df = pd.read_excel(uploaded_file)
+        except ImportError:
+            st.error("Reading Excel files requires 'openpyxl'. Please ensure it is installed.")
+            st.stop()
     else:
         st.error("Unsupported file format. Please upload a CSV or XLSX file.")
         st.stop()
@@ -28,29 +32,30 @@ if uploaded_file:
     if missing_cols:
         st.error(f"Missing required columns: {', '.join(missing_cols)}")
     else:
-        buffer = BytesIO()
-        c = canvas.Canvas(buffer, pagesize=(288, 432))  # 4x6 inches in points
+        if st.button("Generate Shipping Labels"):
+            buffer = BytesIO()
+            c = canvas.Canvas(buffer, pagesize=(288, 432))  # 4x6 inches in points
 
-        for _, row in df.iterrows():
-            try:
-                carton_count = int(row["Carton Count"])
-            except:
-                carton_count = 1
+            for _, row in df.iterrows():
+                try:
+                    carton_count = int(row["Carton Count"])
+                except:
+                    carton_count = 1
 
-            for i in range(1, carton_count + 1):
-                c.setFont("Helvetica-Bold", 14)
-                c.drawString(20, 400, f"To: {row['Name']}")
-                c.setFont("Helvetica", 12)
-                c.drawString(20, 380, str(row["Address1"]))
-                if pd.notna(row["Address2"]):
-                    c.drawString(20, 360, str(row["Address2"]))
-                c.drawString(20, 340, f"{row['City']}, {row['State']} {row['Postcode']}")
-                c.drawString(20, 320, f"Phone: {row['Phone']}")
-                c.drawString(20, 300, f"Carton {i} of {carton_count}")
-                c.showPage()
+                for i in range(1, carton_count + 1):
+                    c.setFont("Helvetica-Bold", 14)
+                    c.drawString(20, 400, f"To: {row['Name']}")
+                    c.setFont("Helvetica", 12)
+                    c.drawString(20, 380, str(row["Address1"]))
+                    if pd.notna(row["Address2"]):
+                        c.drawString(20, 360, str(row["Address2"]))
+                    c.drawString(20, 340, f"{row['City']}, {row['State']} {row['Postcode']}")
+                    c.drawString(20, 320, f"Phone: {row['Phone']}")
+                    c.drawString(20, 300, f"Carton {i} of {carton_count}")
+                    c.showPage()
 
-        c.save()
-        buffer.seek(0)
+            c.save()
+            buffer.seek(0)
 
-        st.success("Shipping labels created!")
-        st.download_button("Download Labels PDF", buffer, file_name="shipping_labels.pdf", mime="application/pdf")
+            st.success("Shipping labels created!")
+            st.download_button("Download Labels PDF", buffer, file_name="shipping_labels.pdf", mime="application/pdf")
