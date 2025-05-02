@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 from reportlab.pdfgen import canvas
-from reportlab.lib.pagesizes import landscape
 from io import BytesIO
 
 st.set_page_config(page_title="Shipping Label Generator", layout="centered")
@@ -25,6 +24,17 @@ if uploaded_file:
         st.error(f"Error reading file: {e}")
 
     if df is not None:
+        # Auto rename columns from manifest to expected names
+        column_mapping = {
+            "Deliver to": "Name",
+            "Address 1": "Address1",
+            "Address 2": "Address2",
+            "Postal Code": "Postcode",
+            "Phone No.": "Phone",
+            "No. of Shipping Labels": "Carton Count"
+        }
+        df.rename(columns=column_mapping, inplace=True)
+
         if st.button("Generate Shipping Labels"):
             required_cols = ["Name", "Address1", "Address2", "City", "State", "Postcode", "Phone", "Carton Count"]
             missing_cols = [col for col in required_cols if col not in df.columns]
@@ -33,7 +43,7 @@ if uploaded_file:
                 st.error(f"Missing required columns: {', '.join(missing_cols)}")
             else:
                 buffer = BytesIO()
-                c = canvas.Canvas(buffer, pagesize=(288, 432))  # 4x6 inches in points
+                c = canvas.Canvas(buffer, pagesize=(288, 432))  # 4x6 inches
 
                 for _, row in df.iterrows():
                     try:
@@ -48,7 +58,7 @@ if uploaded_file:
                         c.drawString(20, 380, str(row["Address1"]))
                         if pd.notna(row["Address2"]):
                             c.drawString(20, 360, str(row["Address2"]))
-                        c.drawString(20, 340, f"{row['City']}, {row['State']} {row['Postcode']}")
+                        c.drawString(20, 340, f"{row.get('City', '')}, {row['State']} {row['Postcode']}")
                         c.drawString(20, 320, f"Phone: {row['Phone']}")
                         c.drawString(20, 300, f"Carton {i} of {carton_count}")
                         c.showPage()
