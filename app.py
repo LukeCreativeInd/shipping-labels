@@ -36,7 +36,7 @@ if uploaded_file:
         df.rename(columns=column_mapping, inplace=True)
 
         if st.button("Generate Shipping Labels"):
-            required_cols = ["Name", "Address1", "Address2", "City", "State", "Postcode", "Phone", "Carton Count"]
+            required_cols = ["Name", "Address1", "Address2", "State", "Postcode", "Phone", "Carton Count"]
             missing_cols = [col for col in required_cols if col not in df.columns]
 
             if missing_cols:
@@ -58,7 +58,7 @@ if uploaded_file:
                         c.drawString(20, 380, str(row["Address1"]))
                         if pd.notna(row["Address2"]):
                             c.drawString(20, 360, str(row["Address2"]))
-                        c.drawString(20, 340, f"{row.get('City', '')}, {row['State']} {row['Postcode']}")
+                        c.drawString(20, 340, f"{row['State']} {row['Postcode']}")
                         c.drawString(20, 320, f"Phone: {row['Phone']}")
                         c.drawString(20, 300, f"Carton {i} of {carton_count}")
                         c.showPage()
