@@ -73,3 +73,26 @@ if uploaded_file:
                             c.drawString(30, 670, str(row["Address2"]))
                             y_postal = 650
                         else:
+                            y_postal = 670
+
+                        # State and Postcode (as City line)
+                        c.drawString(30, y_postal, f"{row['State']} {row['Postcode']}")
+
+                        # Phone
+                        c.drawString(30, y_postal - 30, f"Phone: {row['Phone']}")
+
+                        # Group (bottom left)
+                        c.setFont("Helvetica", 12)
+                        c.drawString(30, 30, str(row["Group"]))
+
+                        # Carton Count (bottom right)
+                        c.setFont("Helvetica-Bold", 16)
+                        c.drawRightString(270, 30, f"{i}/{carton_count}")
+
+                        c.showPage()
+
+                c.save()
+                buffer.seek(0)
+
+                st.success("Shipping labels created!")
+                st.download_button("Download Labels PDF", buffer, file_name="shipping_labels.pdf", mime="application/pdf")
