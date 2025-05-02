@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 from reportlab.pdfgen import canvas
 from reportlab.lib.units import inch
-from reportlab.lib.pagesizes import portrait
 from io import BytesIO
 
 st.set_page_config(page_title="Shipping Label Generator", layout="centered")
@@ -54,27 +53,32 @@ if uploaded_file:
                         carton_count = 1
 
                     for i in range(1, carton_count + 1):
-                        # Top section
-                        c.setFont("Helvetica-Bold", 14)
-                        c.drawString(0.4 * inch, 5.7 * inch, str(row["D.O. No."]))  # Order number
+                        phone = str(row["Phone"]).strip()
+                        if phone.isdigit() and len(phone) == 9:
+                            phone = "0" + phone
 
+                        # Order Number
+                        c.setFont("Helvetica-Bold", 14)
+                        c.drawString(0.4 * inch, 5.7 * inch, str(row["D.O. No."]))
+
+                        # SHIP TO label
                         c.setFont("Helvetica-Bold", 10)
                         c.drawString(0.4 * inch, 5.4 * inch, "SHIP TO:")
 
+                        # Recipient Name + Address
                         c.setFont("Helvetica", 13)
                         c.drawString(0.4 * inch, 5.1 * inch, str(row["Name"]))
                         c.setFont("Helvetica", 12)
                         c.drawString(0.4 * inch, 4.85 * inch, str(row["Address1"]))
                         c.drawString(0.4 * inch, 4.65 * inch, str(row["Suburb"]))
                         c.drawString(0.4 * inch, 4.45 * inch, f"{row['State']} {row['Postcode']}")
-                        c.drawString(0.4 * inch, 4.2 * inch, f"Phone: {row['Phone']}")
+                        c.drawString(0.4 * inch, 4.2 * inch, f"Phone: {phone}")
 
-                        # Bottom section
+                        # Bottom info
                         c.setFont("Helvetica", 11)
-                        c.drawString(0.4 * inch, 0.4 * inch, str(row["Group"]))  # Group bottom-left
-
+                        c.drawString(0.4 * inch, 0.4 * inch, str(row["Group"]))
                         c.setFont("Helvetica-Bold", 16)
-                        c.drawRightString(3.6 * inch, 0.4 * inch, f"{i}/{carton_count}")  # Carton count bottom-right
+                        c.drawRightString(3.6 * inch, 0.4 * inch, f"{i}/{carton_count}")
 
                         c.showPage()
 
