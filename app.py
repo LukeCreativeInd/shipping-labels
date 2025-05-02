@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 from reportlab.pdfgen import canvas
+from reportlab.lib.units import inch
 from io import BytesIO
 
 st.set_page_config(page_title="Shipping Label Generator", layout="centered")
@@ -24,7 +25,7 @@ if uploaded_file:
         st.error(f"Error reading file: {e}")
 
     if df is not None:
-        # Auto rename columns from manifest to expected names
+        # Rename columns for consistency
         column_mapping = {
             "Deliver to": "Name",
             "Address 1": "Address1",
@@ -36,14 +37,14 @@ if uploaded_file:
         df.rename(columns=column_mapping, inplace=True)
 
         if st.button("Generate Shipping Labels"):
-            required_cols = ["Name", "Address1", "Address2", "State", "Postcode", "Phone", "Carton Count"]
+            required_cols = ["Name", "Address1", "Address2", "State", "Postcode", "Phone", "Carton Count", "D.O. No.", "Group"]
             missing_cols = [col for col in required_cols if col not in df.columns]
 
             if missing_cols:
                 st.error(f"Missing required columns: {', '.join(missing_cols)}")
             else:
                 buffer = BytesIO()
-                c = canvas.Canvas(buffer, pagesize=(288, 432))  # 4x6 inches
+                c = canvas.Canvas(buffer, pagesize=(4 * inch, 6 * inch))  # 4x6 inches
 
                 for _, row in df.iterrows():
                     try:
@@ -52,19 +53,23 @@ if uploaded_file:
                         carton_count = 1
 
                     for i in range(1, carton_count + 1):
+                        # Order Number (Top left)
                         c.setFont("Helvetica-Bold", 14)
-                        c.drawString(20, 400, f"To: {row['Name']}")
+                        c.drawString(30, 770, str(row["D.O. No."]))
+
+                        # "SHIP TO:"
+                        c.setFont("Helvetica-Bold", 10)
+                        c.drawString(30, 740, "SHIP TO:")
+
+                        # Recipient Name
+                        c.setFont("Helvetica", 14)
+                        c.drawString(30, 715, str(row["Name"]))
+
+                        # Address lines
                         c.setFont("Helvetica", 12)
-                        c.drawString(20, 380, str(row["Address1"]))
-                        if pd.notna(row["Address2"]):
-                            c.drawString(20, 360, str(row["Address2"]))
-                        c.drawString(20, 340, f"{row['State']} {row['Postcode']}")
-                        c.drawString(20, 320, f"Phone: {row['Phone']}")
-                        c.drawString(20, 300, f"Carton {i} of {carton_count}")
-                        c.showPage()
+                        c.drawString(30, 690, str(row["Address1"]))
 
-                c.save()
-                buffer.seek(0)
-
-                st.success("Shipping labels created!")
-                st.download_button("Download Labels PDF", buffer, file_name="shipping_labels.pdf", mime="application/pdf")
+                        if pd.notna(row["Address2"]) and str(row["Address2"]).strip():
+                            c.drawString(30, 670, str(row["Address2"]))
+                            y_postal = 650
+                        else:
