@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 from reportlab.pdfgen import canvas
 from reportlab.lib.units import inch
+from reportlab.lib.pagesizes import portrait
 from io import BytesIO
 
 st.set_page_config(page_title="Shipping Label Generator", layout="centered")
@@ -43,7 +44,8 @@ if uploaded_file:
                 st.error(f"Missing required columns: {', '.join(missing_cols)}")
             else:
                 buffer = BytesIO()
-                c = canvas.Canvas(buffer, pagesize=(4 * inch, 6 * inch))
+                label_width, label_height = 4 * inch, 6 * inch
+                c = canvas.Canvas(buffer, pagesize=(label_width, label_height))
 
                 for _, row in df.iterrows():
                     try:
@@ -52,36 +54,27 @@ if uploaded_file:
                         carton_count = 1
 
                     for i in range(1, carton_count + 1):
-                        # Order Number
+                        # Top section
                         c.setFont("Helvetica-Bold", 14)
-                        c.drawString(30, 770, str(row["D.O. No."]))
+                        c.drawString(0.4 * inch, 5.7 * inch, str(row["D.O. No."]))  # Order number
 
-                        # "SHIP TO"
                         c.setFont("Helvetica-Bold", 10)
-                        c.drawString(30, 740, "SHIP TO:")
+                        c.drawString(0.4 * inch, 5.4 * inch, "SHIP TO:")
 
-                        # Recipient Name
-                        c.setFont("Helvetica", 14)
-                        c.drawString(30, 715, str(row["Name"]))
-
-                        # Address 1
+                        c.setFont("Helvetica", 13)
+                        c.drawString(0.4 * inch, 5.1 * inch, str(row["Name"]))
                         c.setFont("Helvetica", 12)
-                        c.drawString(30, 690, str(row["Address1"]))
+                        c.drawString(0.4 * inch, 4.85 * inch, str(row["Address1"]))
+                        c.drawString(0.4 * inch, 4.65 * inch, str(row["Suburb"]))
+                        c.drawString(0.4 * inch, 4.45 * inch, f"{row['State']} {row['Postcode']}")
+                        c.drawString(0.4 * inch, 4.2 * inch, f"Phone: {row['Phone']}")
 
-                        # Suburb, State, Postcode
-                        c.drawString(30, 670, f"{row['Suburb']}")
-                        c.drawString(30, 650, f"{row['State']} {row['Postcode']}")
+                        # Bottom section
+                        c.setFont("Helvetica", 11)
+                        c.drawString(0.4 * inch, 0.4 * inch, str(row["Group"]))  # Group bottom-left
 
-                        # Phone
-                        c.drawString(30, 620, f"Phone: {row['Phone']}")
-
-                        # Group (bottom left)
-                        c.setFont("Helvetica", 12)
-                        c.drawString(30, 30, str(row["Group"]))
-
-                        # Carton Count (bottom right)
                         c.setFont("Helvetica-Bold", 16)
-                        c.drawRightString(270, 30, f"{i}/{carton_count}")
+                        c.drawRightString(3.6 * inch, 0.4 * inch, f"{i}/{carton_count}")  # Carton count bottom-right
 
                         c.showPage()
 
