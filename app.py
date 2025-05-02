@@ -42,11 +42,14 @@ if uploaded_file:
             if missing_cols:
                 st.error(f"Missing required columns: {', '.join(missing_cols)}")
             else:
+                # Sort orders alphabetically by D.O. No.
+                df_sorted = df.sort_values(by="D.O. No.")
+
                 buffer = BytesIO()
                 label_width, label_height = 4 * inch, 6 * inch
                 c = canvas.Canvas(buffer, pagesize=(label_width, label_height))
 
-                for _, row in df.iterrows():
+                for _, row in df_sorted.iterrows():
                     try:
                         carton_count = int(row["Carton Count"])
                     except:
@@ -57,15 +60,15 @@ if uploaded_file:
                         if phone.isdigit() and len(phone) == 9:
                             phone = "0" + phone
 
-                        # Order Number
+                        # Order Number (Top)
                         c.setFont("Helvetica-Bold", 14)
                         c.drawString(0.4 * inch, 5.7 * inch, str(row["D.O. No."]))
 
-                        # SHIP TO label
+                        # SHIP TO
                         c.setFont("Helvetica-Bold", 10)
                         c.drawString(0.4 * inch, 5.4 * inch, "SHIP TO:")
 
-                        # Recipient Name + Address
+                        # Recipient Info
                         c.setFont("Helvetica", 13)
                         c.drawString(0.4 * inch, 5.1 * inch, str(row["Name"]))
                         c.setFont("Helvetica", 12)
@@ -74,7 +77,7 @@ if uploaded_file:
                         c.drawString(0.4 * inch, 4.45 * inch, f"{row['State']} {row['Postcode']}")
                         c.drawString(0.4 * inch, 4.2 * inch, f"Phone: {phone}")
 
-                        # Bottom info
+                        # Bottom Info
                         c.setFont("Helvetica", 11)
                         c.drawString(0.4 * inch, 0.4 * inch, str(row["Group"]))
                         c.setFont("Helvetica-Bold", 16)
