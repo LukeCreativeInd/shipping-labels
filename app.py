@@ -25,11 +25,10 @@ if uploaded_file:
         st.error(f"Error reading file: {e}")
 
     if df is not None:
-        # Rename columns for consistency
         column_mapping = {
             "Deliver to": "Name",
             "Address 1": "Address1",
-            "Address 2": "Address2",
+            "Address 2": "Suburb",
             "Postal Code": "Postcode",
             "Phone No.": "Phone",
             "No. of Shipping Labels": "Carton Count"
@@ -37,14 +36,14 @@ if uploaded_file:
         df.rename(columns=column_mapping, inplace=True)
 
         if st.button("Generate Shipping Labels"):
-            required_cols = ["Name", "Address1", "Address2", "State", "Postcode", "Phone", "Carton Count", "D.O. No.", "Group"]
+            required_cols = ["Name", "Address1", "Suburb", "State", "Postcode", "Phone", "Carton Count", "D.O. No.", "Group"]
             missing_cols = [col for col in required_cols if col not in df.columns]
 
             if missing_cols:
                 st.error(f"Missing required columns: {', '.join(missing_cols)}")
             else:
                 buffer = BytesIO()
-                c = canvas.Canvas(buffer, pagesize=(4 * inch, 6 * inch))  # 4x6 inches
+                c = canvas.Canvas(buffer, pagesize=(4 * inch, 6 * inch))
 
                 for _, row in df.iterrows():
                     try:
@@ -53,11 +52,11 @@ if uploaded_file:
                         carton_count = 1
 
                     for i in range(1, carton_count + 1):
-                        # Order Number (Top left)
+                        # Order Number
                         c.setFont("Helvetica-Bold", 14)
                         c.drawString(30, 770, str(row["D.O. No."]))
 
-                        # "SHIP TO:"
+                        # "SHIP TO"
                         c.setFont("Helvetica-Bold", 10)
                         c.drawString(30, 740, "SHIP TO:")
 
@@ -65,21 +64,16 @@ if uploaded_file:
                         c.setFont("Helvetica", 14)
                         c.drawString(30, 715, str(row["Name"]))
 
-                        # Address lines
+                        # Address 1
                         c.setFont("Helvetica", 12)
                         c.drawString(30, 690, str(row["Address1"]))
 
-                        if pd.notna(row["Address2"]) and str(row["Address2"]).strip():
-                            c.drawString(30, 670, str(row["Address2"]))
-                            y_postal = 650
-                        else:
-                            y_postal = 670
-
-                        # State and Postcode (as City line)
-                        c.drawString(30, y_postal, f"{row['State']} {row['Postcode']}")
+                        # Suburb, State, Postcode
+                        c.drawString(30, 670, f"{row['Suburb']}")
+                        c.drawString(30, 650, f"{row['State']} {row['Postcode']}")
 
                         # Phone
-                        c.drawString(30, y_postal - 30, f"Phone: {row['Phone']}")
+                        c.drawString(30, 620, f"Phone: {row['Phone']}")
 
                         # Group (bottom left)
                         c.setFont("Helvetica", 12)
